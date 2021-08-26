@@ -143,3 +143,4 @@ tools
 .vs
 package-lock.json
 build-tools
+.idea
