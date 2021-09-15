@@ -7,9 +7,7 @@ namespace PeanutButter.TrayIcon
     /// </summary>
     public class TrayIconAlreadyInitializedException : Exception
     {
-        /// <summary>
-        /// Creates an instance of the exception
-        /// </summary>
+        /// <inheritdoc />
         public TrayIconAlreadyInitializedException()
             : base("This instance of the TrayIcon has already been initialized")
         {

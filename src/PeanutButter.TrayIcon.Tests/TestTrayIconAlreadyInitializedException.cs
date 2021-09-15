@@ -1,6 +1,7 @@
 ﻿using System;
 using NUnit.Framework;
-using PeanutButter.TestUtils.Generic;
+using NExpect;
+using static NExpect.Expectations;
 
 namespace PeanutButter.TrayIcon.Tests
 {
@@ -16,7 +17,8 @@ namespace PeanutButter.TrayIcon.Tests
             //---------------Assert Precondition----------------
 
             //---------------Execute Test ----------------------
-            sut.ShouldInheritFrom<Exception>();
+            Expect(sut)
+                .To.Inherit<Exception>();
 
             //---------------Test Result -----------------------
         }
@@ -32,7 +34,8 @@ namespace PeanutButter.TrayIcon.Tests
             var sut = new TrayIconAlreadyInitializedException();
 
             //---------------Test Result -----------------------
-            Assert.AreEqual("This instance of the TrayIcon has already been initialized", sut.Message);
+            Expect(sut.Message)
+                .To.Equal("This instance of the TrayIcon has already been initialized");
         }
     }
 

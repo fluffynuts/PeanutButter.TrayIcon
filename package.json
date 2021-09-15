@@ -6,13 +6,14 @@
     },
     "license": "BSD-3-Clause",
     "scripts": {
-        "test": "cross-env TEST_EXCLUDE=PeanutButter.RandomGenerators.Core.Tests.Domain run-s \"zarro test-dotnet\"",
+        "test": "cross-env run-s \"zarro test-dotnet\"",
         "cover": "cross-env COVERAGE_INCLUDE=*,PeanutButter.* COVERAGE_EXCLUDE_ASSEMBLIES=PeanutButter.RandomGenerators.Core.Tests.Domain COVERAGE_ADDITIONAL_EXCLUDE=GenericBuilderTestLoadLoadedAssemblyObject,GenericBuilderTestNotLoadedAssembly run-s \"zarro cover-dotnet\"",
         "postcover": "run-s generate-reports",
         "generate-reports": "cross-env COVERAGE_INCLUDE=*,PeanutButter.* COVERAGE_EXCLUDE_ASSEMBLIES=PeanutButter.RandomGenerators.Core.Tests.Domain COVERAGE_ADDITIONAL_EXCLUDE=GenericBuilderTestLoadLoadedAssemblyObject,GenericBuilderTestNotLoadedAssembly run-s \"zarro generate-reports\"",
         "build": "run-s \"zarro build\"",
-        "zarro": "cross-env BUILD_TOOLS_FOLDER=build-tools DOTNET_CORE=1 zarro",
-        "release": "run-s test \"zarro release\"",
+        "zarro": "cross-env BUILD_TOOLS_FOLDER=build-tools zarro",
+        "prerelease": "run-s test",
+        "release": "run-s \"zarro release\"",
         "quick-release": "run-s \"zarro release\"",
         "pack": "cross-env BUILD_CONFIGURATION=Release run-s \"zarro pack\""
     },
@@ -20,7 +21,8 @@
         "cross-env": "^7.0.2",
         "gulp-edit-xml": "^3.1.1",
         "npm-run-all": "^4.1.5",
-        "p-queue": "^6.4.0",
-        "zarro": "^1.50.0"
+        "p-queue": "^6.6.2",
+        "yafs": "^1.14.0",
+        "zarro": "^1.91.0"
     }
 }

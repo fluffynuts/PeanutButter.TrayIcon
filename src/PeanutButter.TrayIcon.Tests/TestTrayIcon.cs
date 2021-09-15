@@ -8,6 +8,7 @@ using PeanutButter.Utils;
 using static PeanutButter.RandomGenerators.RandomValueGen;
 using NExpect;
 using static NExpect.Expectations;
+
 // ReSharper disable LocalizableElement
 
 namespace PeanutButter.TrayIcon.Tests
@@ -37,16 +38,18 @@ namespace PeanutButter.TrayIcon.Tests
                     () => MessageBox.Show("You closed the balloon ):"));
             });
             var sub = trayIcon.AddSubMenu("Sub Menu");
-            trayIcon.AddMenuItem("Item 1", () => { }, sub);
+            trayIcon.AddMenuItem("Item 1", () =>
+            {
+            }, sub);
             trayIcon.AddMenuItem("Destroy Sub", () =>
             {
                 trayIcon.RemoveMenuItem("Sub Menu");
             }, sub);
 
-            var buttons = new[] {MouseButtons.Left, MouseButtons.Right, MouseButtons.Middle};
+            var buttons = new[] { MouseButtons.Left, MouseButtons.Right, MouseButtons.Middle };
             var handlers = new List<MouseClickHandler>();
 
-            new[] {MouseClicks.Single, MouseClicks.Double}.ForEach(mc =>
+            new[] { MouseClicks.Single, MouseClicks.Double }.ForEach(mc =>
             {
                 buttons.ForEach(button =>
                 {
@@ -95,11 +98,6 @@ namespace PeanutButter.TrayIcon.Tests
             //---------------Test Result -----------------------
         }
 
-        private TrayIcon Create()
-        {
-            return new TrayIcon(Resource1.Happy_smiley_face);
-        }
-
         [Test]
         public void AddMouseClickHandler_ShouldAddHandler()
         {
@@ -128,7 +126,9 @@ namespace PeanutButter.TrayIcon.Tests
             var sut = Create();
             var clicks = GetRandom<MouseClicks>();
             var button = GetRandom<MouseButtons>();
-            var handler = sut.AddMouseClickHandler(clicks, button, () => { });
+            var handler = sut.AddMouseClickHandler(clicks, button, () =>
+            {
+            });
             //--------------- Assume ----------------
             Expect(sut.MouseClickHandlers).Not.To.Be.Empty();
 
@@ -138,6 +138,7 @@ namespace PeanutButter.TrayIcon.Tests
             //--------------- Assert -----------------------
             Expect(sut.MouseClickHandlers).To.Be.Empty();
         }
+
         [Test]
         public void AddMenuItem_ShouldAddHandler()
         {
@@ -163,7 +164,9 @@ namespace PeanutButter.TrayIcon.Tests
             //--------------- Arrange -------------------
             var sut = Create();
             var text = GetRandomString();
-            sut.AddMenuItem(text, () => { });
+            sut.AddMenuItem(text, () =>
+            {
+            });
             //--------------- Assume ----------------
 
             //--------------- Act ----------------------
@@ -209,7 +212,9 @@ namespace PeanutButter.TrayIcon.Tests
         public void DefaultBalloonTipClicked_ShouldBeReadWrite()
         {
             //--------------- Arrange -------------------
-            var expected = new Action(() => { });
+            var expected = new Action(() =>
+            {
+            });
             var sut = Create();
 
             //--------------- Assume ----------------
@@ -225,7 +230,9 @@ namespace PeanutButter.TrayIcon.Tests
         public void DefaultBalloonTipClosed_ShouldBeReadWrite()
         {
             //--------------- Arrange -------------------
-            var expected = new Action(() => { });
+            var expected = new Action(() =>
+            {
+            });
             var sut = Create();
 
             //--------------- Assume ----------------
@@ -258,10 +265,10 @@ namespace PeanutButter.TrayIcon.Tests
         {
             //--------------- Arrange -------------------
             var sut = Create();
-            var sub = Substitute.For<INotifyIcon>();
+            var sub = CreateSubstituteNotifyIcon();
             sut.DefaultTipText = GetRandomString(5);
             sut.DefaultTipTitle = GetRandomString(5);
-            sut.NotificationIcon = sub;
+            sut.NotifyIcon = sub;
 
             //--------------- Assume ----------------
 
@@ -270,7 +277,7 @@ namespace PeanutButter.TrayIcon.Tests
             sut.BalloonTipClickHandlers.ClosedAction();
 
             //--------------- Assert -----------------------
-            Expect(sut.ShowingDefaultBaloonTip).To.Be.False();
+            Expect(sut.ShowingDefaultBalloonTip).To.Be.False();
             Expect(sut.BalloonTipClickHandlers).To.Be.Null();
         }
 
@@ -283,8 +290,8 @@ namespace PeanutButter.TrayIcon.Tests
             var title = GetRandomString();
             var text = GetRandomString();
             var ico = GetRandom<ToolTipIcon>();
-            var sub = Substitute.For<INotifyIcon>();
-            sut.NotificationIcon = sub;
+            var sub = CreateSubstituteNotifyIcon();
+            sut.NotifyIcon = sub;
 
             //--------------- Assume ----------------
 
@@ -294,8 +301,12 @@ namespace PeanutButter.TrayIcon.Tests
                 title,
                 text,
                 ico,
-                () => { },
-                () => { }
+                () =>
+                {
+                },
+                () =>
+                {
+                }
             );
 
 
@@ -313,9 +324,9 @@ namespace PeanutButter.TrayIcon.Tests
         {
             //--------------- Arrange -------------------
             var sut = Create();
-            var sub = Substitute.For<INotifyIcon>();
+            var sub = CreateSubstituteNotifyIcon();
             sub.Visible = true;
-            sut.NotificationIcon = sub;
+            sut.NotifyIcon = sub;
 
             //--------------- Assume ----------------
 
@@ -324,7 +335,15 @@ namespace PeanutButter.TrayIcon.Tests
 
 
             //--------------- Assert -----------------------
-            Expect(sub.Visible).To.Be.False();
+            Expect(sub.Actual.Visible).To.Be.False();
+        }
+
+        private static INotifyIcon CreateSubstituteNotifyIcon()
+        {
+            var result = Substitute.For<INotifyIcon>();
+            var notifyIcon = new NotifyIcon();
+            result.Actual.Returns(notifyIcon);
+            return result;
         }
 
         [Test]
@@ -332,11 +351,9 @@ namespace PeanutButter.TrayIcon.Tests
         {
             //--------------- Arrange -------------------
             var sut = Create();
-            var sub = Substitute.For<INotifyIcon>();
-            var actual = new NotifyIcon();
-            sub.Actual.Returns(actual);
-            sub.Visible = false;
-            sut.NotificationIcon = sub;
+            var sub = CreateSubstituteNotifyIcon();
+            sub.Actual.Visible = false;
+            sut.NotifyIcon = sub;
 
             //--------------- Assume ----------------
 
@@ -344,7 +361,7 @@ namespace PeanutButter.TrayIcon.Tests
             sut.Show();
 
             //--------------- Assert -----------------------
-            Expect(sub.Visible).To.Be.True();
+            Expect(sub.Actual.Visible).To.Be.True();
         }
 
         [Test]
@@ -353,7 +370,7 @@ namespace PeanutButter.TrayIcon.Tests
             //--------------- Arrange -------------------
             var sut = Create();
             var sub = Substitute.For<INotifyIcon>();
-            sut.NotificationIcon = sub;
+            sut.NotifyIcon = sub;
 
             //--------------- Assume ----------------
 
@@ -422,5 +439,68 @@ namespace PeanutButter.TrayIcon.Tests
             Expect(doubleClickCalled).To.Be.True();
         }
 
+        [TestFixture]
+        public class RenamingMenuItems
+        {
+            [Test]
+            [Explicit("Visual test")]
+            public void ShouldRenameItem()
+            {
+                // Arrange
+                var sut = Create();
+                var isBlack = true;
+                // Act
+                sut.AddMenuItem($"Black", () =>
+                {
+                    if (isBlack)
+                    {
+                        sut.RenameMenuItem("Black", "White");
+                        isBlack = false;
+                    }
+                    else
+                    {
+                        sut.RenameMenuItem("White", "Black");
+                        isBlack = true;
+                    }
+                });
+                sut.AddMenuItem("Exit", sut.ExitApplication);
+                sut.Show();
+                Application.Run();
+                // Assert
+            }
+        }
+
+        [TestFixture]
+        public class ClearingTheMenu
+        {
+            [Test]
+            [Explicit("visual test")]
+            public void ShouldClearTheMenu()
+            {
+                // Arrange
+                var sut = Create();
+                sut.AddMenuItem("A", () =>
+                {
+                });
+                sut.AddMenuItem("B", () =>
+                {
+                });
+                sut.AddMenuItem("Clear", () =>
+                {
+                    sut.ClearMenu();
+                    sut.AddMenuItem("Exit", sut.ExitApplication);
+                });
+
+                // Act
+                sut.Show();
+                Application.Run();
+                // Assert
+            }
+        }
+
+        private static TrayIcon Create()
+        {
+            return new TrayIcon(Resource1.Happy_smiley_face);
+        }
     }
 }

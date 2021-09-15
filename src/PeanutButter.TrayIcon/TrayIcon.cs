@@ -14,19 +14,28 @@ namespace PeanutButter.TrayIcon
     public class TrayIcon : ITrayIcon
     {
         /// <inheritdoc />
-        public NotifyIcon NotifyIcon => NotificationIcon.Actual;
+        public INotifyIcon NotifyIcon { get; internal set; }
 
-        internal INotifyIcon NotificationIcon { get; set; }
+        private NotifyIcon RawIcon => NotifyIcon?.Actual
+            ?? throw new TrayIconNotInitializedException();
+
         private Icon _icon;
-        internal bool ShowingDefaultBaloonTip => _showingDefaultBalloonTip;
+
+        /// <inheritdoc />
+        public bool ShowingDefaultBalloonTip => _showingDefaultBalloonTip;
+
         private bool _showingDefaultBalloonTip;
+
         /// <inheritdoc />
         public int DefaultBalloonTipTimeout { get; set; }
+
         private readonly object _lock = new object();
+
         /// <summary>
         /// Provides an array of the currently-registered mouse click handlers
         /// </summary>
         public IEnumerable<MouseClickHandler> MouseClickHandlers => _mouseClickHandlers.ToArray();
+
         private readonly List<MouseClickHandler> _mouseClickHandlers = new List<MouseClickHandler>();
 
         /// <inheritdoc />
@@ -36,7 +45,7 @@ namespace PeanutButter.TrayIcon
             set
             {
                 _icon = value;
-                NotificationIcon.Icon = _icon;
+                RawIcon.Icon = _icon;
             }
         }
 
@@ -122,22 +131,40 @@ namespace PeanutButter.TrayIcon
         private bool _alreadyInitialized;
 
         /// <inheritdoc />
-        public void ShowBalloonTipFor(int timeoutInMilliseconds, string title, string text, ToolTipIcon icon,
-            Action clickAction = null, Action closeAction = null)
+        public void ShowBalloonTipFor(int timeoutInMilliseconds,
+            string title,
+            string text,
+            ToolTipIcon icon,
+            Action clickAction = null,
+            Action closeAction = null)
         {
             lock (this)
             {
-                _balloonTipClickHandlers = new BalloonTipClickHandlerRegistration(clickAction, closeAction);
+                _balloonTipClickHandlers = new BalloonTipClickHandlerRegistration(
+                    clickAction,
+                    closeAction
+                );
             }
-            NotificationIcon.ShowBalloonTip(timeoutInMilliseconds, title, text, icon);
+
+            NotifyIcon.ShowBalloonTip(timeoutInMilliseconds, title, text, icon);
         }
 
         /// <inheritdoc />
-        public MenuItem AddSubMenu(string text, MenuItem parent = null)
+        public MenuItem AddSubMenu(
+            string text
+        )
+        {
+            return AddSubMenu(text, null);
+        }
+
+        /// <inheritdoc />
+        public MenuItem AddSubMenu(
+            string text,
+            MenuItem parent
+        )
         {
             lock (_lock)
             {
-                if (NotificationIcon == null) return null;
                 var menuItem = CreateMenuItemWithText(text);
                 AddMenuToParentOrRoot(parent, menuItem);
                 return menuItem;
@@ -145,20 +172,44 @@ namespace PeanutButter.TrayIcon
         }
 
         /// <inheritdoc />
-        public void AddMenuItem(string withText, Action withCallback, MenuItem parent = null)
+        public MenuItem AddMenuItem(
+            string withText,
+            Action withCallback
+        )
+        {
+            return AddMenuItem(
+                withText,
+                withCallback,
+                null
+            );
+        }
+
+        /// <inheritdoc />
+        public MenuItem AddMenuItem(string withText,
+            Action withCallback,
+            MenuItem parent)
         {
             lock (_lock)
             {
-                if (NotificationIcon == null) return;
                 var menuItem = CreateMenuItemWithText(withText);
                 if (withCallback != null)
+                {
                     menuItem.Click += (s, e) => withCallback();
+                }
+
                 AddMenuToParentOrRoot(parent, menuItem);
+                return menuItem;
             }
         }
 
         /// <inheritdoc />
-        public void AddMenuSeparator(MenuItem subMenu = null)
+        public void AddMenuSeparator()
+        {
+            AddMenuSeparator(null);
+        }
+
+        /// <inheritdoc />
+        public void AddMenuSeparator(MenuItem subMenu)
         {
             AddSubMenu("-", subMenu);
         }
@@ -168,7 +219,6 @@ namespace PeanutButter.TrayIcon
         {
             lock (_lock)
             {
-                if (NotificationIcon == null) return;
                 var toRemove = FindMenusByText(withText);
                 foreach (var item in toRemove)
                 {
@@ -180,16 +230,16 @@ namespace PeanutButter.TrayIcon
         /// <inheritdoc />
         public void Show()
         {
-            NotificationIcon.Actual.MouseClick += OnIconMouseClick;
-            NotificationIcon.Actual.MouseDoubleClick += OnIconMouseDoubleClick;
-            NotificationIcon.Icon = _icon;
-            NotificationIcon.Visible = true;
+            RawIcon.MouseClick += OnIconMouseClick;
+            RawIcon.MouseDoubleClick += OnIconMouseDoubleClick;
+            RawIcon.Icon = _icon;
+            RawIcon.Visible = true;
         }
 
         /// <inheritdoc />
         public void Hide()
         {
-            NotificationIcon.Visible = false;
+            RawIcon.Visible = false;
         }
 
         /// <inheritdoc />
@@ -197,8 +247,9 @@ namespace PeanutButter.TrayIcon
         {
             lock (_lock)
             {
-                NotificationIcon?.Dispose();
-                NotificationIcon = null;
+                _alreadyInitialized = false;
+                NotifyIcon?.Dispose();
+                NotifyIcon = null;
             }
         }
 
@@ -224,16 +275,18 @@ namespace PeanutButter.TrayIcon
 
         private void AddMenuToParentOrRoot(MenuItem parent, MenuItem menuItem)
         {
-            var addTo = parent as Menu ?? NotificationIcon.ContextMenu;
+            var addTo = parent as Menu ?? RawIcon.ContextMenu;
             addTo.MenuItems.Add(menuItem);
         }
 
+        // ReSharper disable once MemberCanBePrivate.Global
         internal void OnIconMouseClick(object sender, MouseEventArgs e)
         {
             var handlers = FindHandlersFor(MouseClicks.Single, e.Button);
             RunMouseClickHandlers(handlers);
         }
 
+        // ReSharper disable once MemberCanBePrivate.Global
         internal void OnIconMouseDoubleClick(object sender, MouseEventArgs e)
         {
             var handlers = FindHandlersFor(MouseClicks.Double, e.Button);
@@ -283,7 +336,7 @@ namespace PeanutButter.TrayIcon
         private List<MenuItem> FindAllMenuItems(List<MenuItem> foundSoFar = null, Menu parent = null)
         {
             foundSoFar = foundSoFar ?? new List<MenuItem>();
-            parent = parent ?? NotificationIcon.ContextMenu;
+            parent = parent ?? RawIcon.ContextMenu;
             foreach (var item in parent.MenuItems)
             {
                 var menuItem = item as MenuItem;
@@ -292,6 +345,7 @@ namespace PeanutButter.TrayIcon
                 foundSoFar.Add(menuItem);
                 FindAllMenuItems(foundSoFar, menuItem);
             }
+
             return foundSoFar;
         }
 
@@ -299,31 +353,35 @@ namespace PeanutButter.TrayIcon
         public void Init(Icon icon)
         {
             if (_alreadyInitialized)
+            {
                 throw new TrayIconAlreadyInitializedException();
+            }
+
             _alreadyInitialized = true;
             _icon = icon;
             DefaultBalloonTipTimeout = 2000;
-            NotificationIcon = new NotifyIconWrapper(new NotifyIcon
+            NotifyIcon = new NotifyIconWrapper(new NotifyIcon
             {
                 ContextMenu = new ContextMenu()
             });
-            NotificationIcon.Actual.MouseMove += ShowDefaultBalloonTip;
-            NotificationIcon.Actual.BalloonTipClicked += BalloonTipClickedHandler;
-            NotificationIcon.Actual.BalloonTipClosed += BalloonTipClosedHandler;
+            RawIcon.MouseMove += ShowDefaultBalloonTip;
+            RawIcon.BalloonTipClicked += BalloonTipClickedHandler;
+            RawIcon.BalloonTipClosed += BalloonTipClosedHandler;
         }
 
         private void BalloonTipClosedHandler(object sender, EventArgs e)
         {
-            Action toRun = GetCustomBalloonTipClosedAction() ?? DefaultBalloonTipClosedAction;
+            var toRun = GetCustomBalloonTipClosedAction() ?? DefaultBalloonTipClosedAction;
             toRun?.Invoke();
         }
 
         private void BalloonTipClickedHandler(object sender, EventArgs e)
         {
-            Action toRun = GetCustomBalloonTipClickAction() ?? DefaultBalloonTipClickedAction;
+            var toRun = GetCustomBalloonTipClickAction() ?? DefaultBalloonTipClickedAction;
             toRun?.Invoke();
         }
 
+        // ReSharper disable once MemberCanBePrivate.Global
         internal void ShowDefaultBalloonTip(object sender, MouseEventArgs e)
         {
             if (string.IsNullOrEmpty(DefaultTipText) || string.IsNullOrEmpty(DefaultTipTitle)) return;
@@ -333,6 +391,7 @@ namespace PeanutButter.TrayIcon
                 if (_showingDefaultBalloonTip) return;
                 _showingDefaultBalloonTip = true;
             }
+
             ShowBalloonTipFor(
                 DefaultBalloonTipTimeout,
                 DefaultTipTitle,
@@ -350,7 +409,7 @@ namespace PeanutButter.TrayIcon
 
         private bool HaveRegisteredClickHandlers()
         {
-            lock (this)
+            lock (_lock)
             {
                 return CustomBalloonTipHandlerExists_UNLOCKED();
             }
@@ -363,19 +422,21 @@ namespace PeanutButter.TrayIcon
 
         private Action GetCustomBalloonTipClickAction()
         {
-            lock (this)
+            lock (_lock)
             {
-                if (!CustomBalloonTipHandlerExists_UNLOCKED()) return null;
-                return _balloonTipClickHandlers.ClickAction;
+                return CustomBalloonTipHandlerExists_UNLOCKED()
+                    ? _balloonTipClickHandlers.ClickAction
+                    : null;
             }
         }
 
         private Action GetCustomBalloonTipClosedAction()
         {
-            lock (this)
+            lock (_lock)
             {
-                if (!CustomBalloonTipHandlerExists_UNLOCKED()) return null;
-                return _balloonTipClickHandlers.ClosedAction;
+                return CustomBalloonTipHandlerExists_UNLOCKED()
+                    ? _balloonTipClickHandlers.ClosedAction
+                    : null;
             }
         }
 
@@ -386,6 +447,31 @@ namespace PeanutButter.TrayIcon
                 Text = withText
             };
         }
-    }
 
+        /// <inheritdoc />
+        public void RenameMenuItem(
+            string from,
+            string to
+        )
+        {
+            var items = FindMenusByText(from);
+            foreach (var item in items)
+            {
+                item.Text = to;
+            }
+        }
+
+        /// <inheritdoc />
+        public void ClearMenu()
+        {
+            NotifyIcon.ContextMenu = new ContextMenu();
+        }
+
+        /// <inheritdoc />
+        public void ExitApplication()
+        {
+            Hide();
+            Application.Exit();
+        }
+    }
 }
