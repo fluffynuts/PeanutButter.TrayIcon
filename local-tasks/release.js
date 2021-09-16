@@ -18,5 +18,5 @@ gulp.task("clean-release", async () => {
 
 gulp.task("release", done => {
   console.log("run release");
-  return runSequence("clean-release", "pack", "push", done);
+  return runSequence("clean-release", "pack", "push", "commit-release", "tag-and-push", done);
 });

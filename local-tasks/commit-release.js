@@ -3,7 +3,7 @@ const gulp = requireModule("gulp-with-help"),
   editXml = require("gulp-edit-xml"),
   Git = require("simple-git"),
   git = new Git(),
-  containingFolder = "source/Utils/PeanutButter.Utils"; // track PB.Utils for tag version
+  containingFolder = "src/PeanutButter.TrayIcon";
 
 gulp.task("commit-release", () => {
   return new Promise((resolve, reject) => {
