@@ -8,26 +8,28 @@ namespace PeanutButter.TrayIcon
     /// Most of your needs should be met by the wrapping ITrayIcon, but if there's
     /// something missing, you can always "reach under the covers" here...
     /// </summary>
-    public interface INotifyIcon: IDisposable
+    public interface INotifyIcon : IDisposable
     {
         /// <summary>
         /// Provides raw access to the underlying win32 NotifyIcon
         /// </summary>
         NotifyIcon Actual { get; }
+
         /// <summary>
         /// Provides raw access to the icon
         /// </summary>
         Icon Icon { get; set; }
+
         /// <summary>
         /// Provides direct access to icon visibility
         /// </summary>
         bool Visible { get; set; }
-        
+
         /// <summary>
         /// Provides direct access to the context menu
         /// </summary>
         ContextMenu ContextMenu { get; set; }
-        
+
         /// <summary>
         /// Provides direct access to displaying a balloon tip
         /// </summary>
@@ -38,14 +40,16 @@ namespace PeanutButter.TrayIcon
         void ShowBalloonTip(int timeout, string tipTitle, string tipText, ToolTipIcon tipIcon);
     }
 
-    internal class NotifyIconWrapper: INotifyIcon
+    internal class NotifyIconWrapper : INotifyIcon
     {
         public NotifyIcon Actual { get; }
+
         public Icon Icon
         {
             get { return Actual.Icon; }
             set { Actual.Icon = value; }
         }
+
         public bool Visible
         {
             get { return Actual.Visible; }
@@ -56,6 +60,12 @@ namespace PeanutButter.TrayIcon
         {
             get { return Actual.ContextMenu; }
             set { Actual.ContextMenu = value; }
+        }
+
+        public string Text
+        {
+            get { return Actual.Text; }
+            set { Actual.Text = value; }
         }
 
         public NotifyIconWrapper(NotifyIcon actual)
