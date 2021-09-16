@@ -10,13 +10,34 @@ namespace PeanutButter.TrayIcon
     /// </summary>
     public interface INotifyIcon : IDisposable
     {
+        /// <summary>
+        /// Exposes raw access to the underlying win32 NotifyIcon
+        /// </summary>
         NotifyIcon Actual { get; }
+        /// <summary>
+        /// The Icon image shown in the tray
+        /// </summary>
         Icon Icon { get; set; }
+        /// <summary>
+        /// Flag: is this tray icon visible or not
+        /// </summary>
         bool Visible { get; set; }
+        /// <summary>
+        /// Raw access to the context menu
+        /// </summary>
         ContextMenu ContextMenu { get; set; }
+        /// <summary>
+        /// The tooltip displayed when a user mouses over the icon
+        /// </summary>
         string Text { get; set; }
+        /// <summary>
+        /// Shows a balloon tip (win10: this ends up in the notification center)
+        /// </summary>
+        /// <param name="timeout"></param>
+        /// <param name="tipTitle"></param>
+        /// <param name="tipText"></param>
+        /// <param name="tipIcon"></param>
         void ShowBalloonTip(int timeout, string tipTitle, string tipText, ToolTipIcon tipIcon);
-        void Dispose();
     }
 
     internal class NotifyIconWrapper : INotifyIcon
